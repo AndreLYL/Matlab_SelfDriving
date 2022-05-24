@@ -8,8 +8,7 @@ classdef TestCaseGen
     
     methods
         function obj = TestCaseGen(model, doc, harness)
-            %UNTITLED 构造此类的实例
-            %   此处显示详细说明
+            % TestCaseGen class constructor
             obj.modelName = model;
             obj.testCaseDoc = doc;
             obj.testHarness = harness;
