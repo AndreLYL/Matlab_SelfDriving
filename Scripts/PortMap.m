@@ -1,46 +1,53 @@
-% 找到子系统的句柄
-aa = find_system(bdroot,'FindAll','on','SearchDepth','1','BlockType','SubSystem');
-% 返回子系统的名称
-bb = get_param(aa,'Name');
-% 拼接子系统路径
-cc = [bdroot,'/',bb];
-% 找出外部输入端口
-dd = find_system(bdroot,'FindAll','on','SearchDepth','1','BlockType','Inport');
-% 找出外部输出端口
-ee = find_system(bdroot,'FindAll','on','SearchDepth','1','BlockType','Outport');
-% 找出子系统输入端口
-ff = find_system(cc,'FindAll','on','SearchDepth','1','BlockType','Inport');
-% 找出子系统输出端口
-gg = find_system(cc,'FindAll','on','SearchDepth','1','BlockType','Outport');
-% 输入端口连接
-for k = 1:length(ff)%子系统循环在外
-    for i = 1:length(dd)%外部端口循环在内
-        if (get_param(dd(i),'Name') == get_param(ff(k),'Name'))
-            hh = get_param(dd(i),'Name');
-            add_line(bdroot,[hh,'/1'],[bb,'/',num2str(k)]);
+currPathHandle = get_param(gcs, 'Handle');
+subSysHandle = find_system(gcs,'FindAll','on','SearchDepth','1','BlockType','SubSystem');
+parentInHandle = find_system(gcs,'FindAll','on','SearchDepth','1','BlockType','Inport');
+parentOutHandle = find_system(gcs,'FindAll','on','SearchDepth','1','BlockType','Outport');
+parentInName = get_param(parentInHandle, 'Name')
+% if(iscell(get_param(parentInHandle, 'Name')))
+%     a = cell2mat(get_param(parentInHandle, 'Name'))
+% else
+%     a = get_param(parentInHandle, 'Name')
+% end
+if length(parentInHandle) > 1
+    parentIn = [get_param(parentInHandle, 'Port') get_param(parentInHandle, 'Name') get_param(parentInHandle, 'PortHandles')]
+elseif length(parentInHandle) == 1
+    parentIn = [mat2cell(get_param(parentInHandle, 'Port')) mat2cell(get_param(parentInHandle, 'Name')) mat2cell(get_param(parentInHandle, 'PortHandles'))]
+else
+    disp("Warn: No Inport Found")
+    parentIn = []
+end
+
+if length(parentOutHandle) > 1
+    parentOut = [get_param(parentOutHandle, 'Port') get_param(parentOutHandle, 'Name') get_param(parentOutHandle, 'PortHandles')]  
+elseif length(parentInHandle) == 1
+    parentOut = [mat2cell(get_param(parentOutHandle, 'Port')) mat2cell(get_param(parentOutHandle, 'Name')) mat2cell(get_param(parentOutHandle, 'PortHandles'))]  
+else
+    disp("Warn: No Outport Found")
+    parentOut = []
+end
+% parentOutName = get_param(parentOutHandle, 'Name')
+% parentOut = [get_param(parentOutHandle, 'Port') get_param(parentOutHandle, 'Name') get_param(parentOutHandle, 'PortHandles')]  
+
+%思路：首先根据Inport/Outport的Connectivity判断是否是没连接的端口,然后根据子系统的Port Name判断是否可以连接
+
+for i = 1:length(subSysHandle)
+    if subSysHandle(i) == currPathHandle
+        disp('aaaa')
+        continue
+    end
+    childInHandle = find_system(subSysHandle(i),'FindAll','on','SearchDepth','1','BlockType','Inport');
+    childOutHandle = find_system(subSysHandle(i),'FindAll','on','SearchDepth','1','BlockType','Outport');
+    childIn = [get_param(childInHandle, 'Port') get_param(childInHandle, 'Name') get_param(childInHandle, 'PortHandles')]
+    for j = 1:length(childIn)
+        for k = 1:length(parentIn)
+            if(strcmp(cell2mat(childIn(j, 2)), cell2mat(parentIn(k, 2))))
+                disp('Found')
+                lineStartPos = get(cell2mat(parentIn(k, 3)).Outport).Position
+                lineEndPos = get_param(get(subSysHandle(i)).PortHandles.Inport(j), 'Position')
+                linePos = [lineStartPos; lineEndPos]
+                add_line(gcs,cell2mat(parentIn(k, 3)).Outport, get(subSysHandle(i)).PortHandles.Inport(j),'autorouting','on')
+            end
         end
     end
+  
 end
-%输出端口连接
-for y = 1:length(gg)%子系统循环在外
-    for x = 1:length(ee)%外部端口循环在内
-        if (get_param(ee(x),'Name') == get_param(gg(y),'Name'))
-            ii = get_param(ee(x),'Name');
-            add_line(bdroot,[bb,'/',num2str(y)],[ii,'/1']);
-        end
-    end
-end
-% 信号线平直
-aaa = get_param(cc,'PortConnectivity');
-for k=1:length(aaa)
-    bbb = aaa(k).Position;
-    if(~isempty(aaa(k).SrcBlock))
-        set_param(aaa(k).SrcBlock,'Position',[bbb(1)-60,bbb(2)-5,bbb(1)-40,bbb(2)+5])
-    end
-    
-    if(~isempty(aaa(k).DstBlock))
-        set_param(aaa(k).DstBlock,'Position',[bbb(1)+40,bbb(2)-5,bbb(1)+60,bbb(2)+5])
-    end
-end
-% author：flieck
-% date  : 2020/09/07

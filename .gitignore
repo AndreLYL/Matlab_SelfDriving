@@ -18,8 +18,12 @@ helpsearch*/
 slprj/
 sccprj/
 
+# Simulink Cache folders of this Project
+Simulink_Cache/
+
 # Matlab code generation folders
 codegen/
+Code_Generation/
 
 # Simulink autosave extension
 *.autosave
