@@ -14,13 +14,13 @@ classdef TestHarnessGen
             %UNTITLED3 构造此类的实例
             obj.testDoc = 'TestDocument.xlsx';
         end
-        %%
+        %% Read Test Case from .xlsx document
         function res = ReadTestDoc(obj)
             %ReadTestDoc Read Test
             %   此处显示详细说明
             if(~isempty(obj.testDoc))
-                res.testInfo = readtable(obj.testDoc)
-                res.errCode = []
+                res.testInfo = readtable(obj.testDoc);
+                res.errCode = [];
             else
                 res.testInfo = [];
                 res.errCode = 'EmptyTestDoc';
